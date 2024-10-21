@@ -10,11 +10,11 @@ import {
   Patch,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
-import { JwtAuthGuard } from 'src/guard/jwt-auth-guard';
+import { JwtAuthGuard } from '../guard/jwt-auth-guard';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { CreateProductDto } from './dto/create-product.dto';
-import { RolesGuard } from 'src/guard/role.guard';
-import { Roles } from 'src/authentication/roles.decorator';
+import { RolesGuard } from '../guard/role.guard';
+import { Roles } from '../authentication/roles.decorator';
 
 @Controller('products')
 export class ProductsController {

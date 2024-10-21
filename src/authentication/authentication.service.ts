@@ -35,6 +35,11 @@ export class AuthenticationService {
     }
 
     const newUser = await this.usersService.create(signUpDto);
-    return this.login(newUser);
+    const userDto = {
+      id: newUser.id,
+      email: newUser.email,
+      role: newUser.role,
+    };
+    return userDto;
   }
 }
