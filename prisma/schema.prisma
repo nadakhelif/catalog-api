@@ -16,8 +16,10 @@ model User {
   id       Int     @id @default(autoincrement())
   email    String  @unique
   password String
-  isAdmin  Boolean @default(false)
+  role     Role    @default(USER)
   cart     Cart?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Product {
@@ -27,6 +29,8 @@ model Product {
   price           Float
   isConnectedOnly Boolean @default(false)
   CartItem        CartItem[]
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 }
 
 model Cart {
@@ -34,6 +38,8 @@ model Cart {
   userId Int        @unique
   user   User       @relation(fields: [userId], references: [id])
   items  CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 model CartItem {
@@ -43,4 +49,11 @@ model CartItem {
   quantity  Int
   cart      Cart    @relation(fields: [cartId], references: [id])
   product   Product @relation(fields: [productId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  USER
+  ADMIN
 }

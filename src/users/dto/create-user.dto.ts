@@ -1,3 +1,4 @@
+import { Role } from '@prisma/client';
 import { IsEmail, IsString, MinLength } from 'class-validator';
 
 export class CreateUserDto {
@@ -7,4 +8,6 @@ export class CreateUserDto {
   @IsString()
   @MinLength(6)
   password: string;
+
+  role: Role;
 }

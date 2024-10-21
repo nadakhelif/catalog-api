@@ -1,26 +1,74 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
+import { PrismaService } from 'prisma/prisma.service';
+
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 
 @Injectable()
 export class ProductsService {
-  create(createProductDto: CreateProductDto) {
-    return 'This action adds a new product';
+  constructor(private prisma: PrismaService) {}
+
+  async create(createProductDto: CreateProductDto) {
+    try {
+      return await this.prisma.product.create({ data: createProductDto });
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to create product');
+    }
   }
 
-  findAll() {
-    return `This action returns all products`;
+  async findAll(isConnected: boolean) {
+    try {
+      return await this.prisma.product.findMany({
+        where: isConnected ? {} : { isConnectedOnly: false },
+      });
+    } catch (error) {
+      throw new InternalServerErrorException('Failed to fetch products');
+    }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} product`;
+  async findOne(id: number) {
+    try {
+      const product = await this.prisma.product.findUnique({ where: { id } });
+      if (!product) {
+        throw new NotFoundException(`Product with ID ${id} not found`);
+      }
+      return product;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Error fetching the product');
+    }
   }
 
-  update(id: number, updateProductDto: UpdateProductDto) {
-    return `This action updates a #${id} product`;
+  async update(id: number, updateProductDto: UpdateProductDto) {
+    try {
+      const product = await this.findOne(id);
+      return await this.prisma.product.update({
+        where: { id: product.id },
+        data: updateProductDto,
+      });
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to update the product');
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} product`;
+  async remove(id: number) {
+    try {
+      const product = await this.findOne(id);
+      return await this.prisma.product.delete({ where: { id: product.id } });
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to delete the product');
+    }
   }
 }
