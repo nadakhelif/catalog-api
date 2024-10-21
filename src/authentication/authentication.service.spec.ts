@@ -82,7 +82,6 @@ describe('AuthenticationService', () => {
         role: Role.ADMIN,
       };
       const result = await service.login(adminUser);
-      console.log(result);
       expect(result).toEqual({ access_token: 'mockedToken' });
     });
   });
