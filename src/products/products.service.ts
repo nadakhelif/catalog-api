@@ -52,7 +52,7 @@ export class ProductsService {
 
   async update(id: number, updateProductDto: UpdateProductDto) {
     try {
-      const product = await this.findOne(id);
+      const product = await this.findOne(id, true);
       return await this.prisma.product.update({
         where: { id: product.id },
         data: updateProductDto,
@@ -67,7 +67,7 @@ export class ProductsService {
 
   async remove(id: number) {
     try {
-      const product = await this.findOne(id);
+      const product = await this.findOne(id, true);
       return await this.prisma.product.delete({ where: { id: product.id } });
     } catch (error) {
       if (error instanceof NotFoundException) {
