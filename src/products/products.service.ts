@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   InternalServerErrorException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -29,11 +30,16 @@ export class ProductsService {
     }
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, isConnected: boolean) {
     try {
       const product = await this.prisma.product.findUnique({ where: { id } });
       if (!product) {
         throw new NotFoundException(`Product with ID ${id} not found`);
+      }
+      if (product.isConnectedOnly && !isConnected) {
+        throw new ForbiddenException(
+          'This product is only accessible to authenticated users',
+        );
       }
       return product;
     } catch (error) {

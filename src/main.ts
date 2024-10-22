@@ -9,6 +9,7 @@ async function bootstrap() {
     .setTitle('Catalog API')
     .setDescription('API for managing product catalogs')
     .setVersion('1.0')
+    .addBearerAuth()
     .addTag('catalog')
     .build();
   const document = SwaggerModule.createDocument(app, catalogApiConfig);

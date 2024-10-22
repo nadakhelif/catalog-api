@@ -22,6 +22,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { OptionalJwtAuthGuard } from 'src/guard/optional-jwt-auth-guard';
 
 @ApiTags('Products')
 @Controller('products')
@@ -38,18 +39,25 @@ export class ProductsController {
   }
 
   @Get()
+  @UseGuards(OptionalJwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get all products' })
   @ApiResponse({ status: 200, description: 'Returns all products' })
   findAll(@Request() req) {
-    const isConnected = req.user !== undefined;
+    const isConnected = req.user !== false;
+    console.log(isConnected);
+    console.log(req.user);
     return this.productsService.findAll(isConnected);
   }
 
   @Get(':id')
+  @UseGuards(OptionalJwtAuthGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get product by ID' })
   @ApiParam({ name: 'id', description: 'Product ID' })
-  findOne(@Param('id') id: string) {
-    return this.productsService.findOne(+id);
+  findOne(@Param('id') id: string, @Request() req) {
+    const isConnected = req.user !== false;
+    return this.productsService.findOne(+id, isConnected);
   }
 
   @Patch(':id')
