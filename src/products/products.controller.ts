@@ -22,7 +22,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { OptionalJwtAuthGuard } from 'src/guard/optional-jwt-auth-guard';
+import { OptionalJwtAuthGuard } from '../guard/optional-jwt-auth-guard';
 
 @ApiTags('Products')
 @Controller('products')

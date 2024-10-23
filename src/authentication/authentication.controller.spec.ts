@@ -6,7 +6,7 @@ import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Role } from '@prisma/client';
-import { UnauthorizedException } from '@nestjs/common';
+import { ConflictException, UnauthorizedException } from '@nestjs/common';
 
 describe('AuthenticationController', () => {
   let controller: AuthenticationController;
@@ -36,6 +36,12 @@ describe('AuthenticationController', () => {
     usersService = module.get<UsersService>(UsersService);
     jwtService = module.get<JwtService>(JwtService);
     prismaService = module.get<PrismaService>(PrismaService);
+    await prismaService.user.deleteMany({});
+    await authService.signup({
+      email: 'admin@example.com',
+      password: 'adminPassword',
+      role: 'ADMIN',
+    });
   });
 
   it('should be defined', () => {
@@ -44,7 +50,6 @@ describe('AuthenticationController', () => {
 
   describe('login', () => {
     it('should return a token when credentials are valid', async () => {
-      // admin user in db we test with that user
       const loginDto = {
         email: 'admin@example.com',
         password: 'adminPassword',
@@ -56,7 +61,7 @@ describe('AuthenticationController', () => {
     it('should throw UnauthorizedException when credentials are invalid', async () => {
       const loginDto = { email: 'test@example.com', password: 'wrongpassword' };
       await expect(controller.login(loginDto)).rejects.toThrow(
-        UnauthorizedException,
+        new UnauthorizedException('Invalid credentials'),
       );
     });
   });
@@ -68,8 +73,35 @@ describe('AuthenticationController', () => {
         password: 'password',
         role: Role.USER,
       };
+
+      jest.spyOn(authService, 'signup').mockResolvedValue({
+        id: 1,
+        email: signUpDto.email,
+        role: signUpDto.role,
+      });
+
       const result = await controller.signup(signUpDto);
-      expect(result).toBeUndefined();
+      expect(result).toEqual({
+        id: 1,
+        email: signUpDto.email,
+        role: signUpDto.role,
+      });
+    });
+
+    it('should throw ConflictException when user already exists', async () => {
+      const signUpDto = {
+        email: 'existing@example.com',
+        password: 'password',
+        role: Role.USER,
+      };
+
+      jest
+        .spyOn(authService, 'signup')
+        .mockRejectedValue(new ConflictException('User already exists'));
+
+      await expect(controller.signup(signUpDto)).rejects.toThrow(
+        new ConflictException('User already exists'),
+      );
     });
   });
 });

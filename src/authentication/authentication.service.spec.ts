@@ -6,6 +6,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConflictException } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { SignUpDto } from './dto/sign-up.dto';
 
 describe('AuthenticationService', () => {
   let service: AuthenticationService;
@@ -13,7 +14,7 @@ describe('AuthenticationService', () => {
   let jwtService: JwtService;
   let prismaService: PrismaService;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthenticationService,
@@ -27,11 +28,21 @@ describe('AuthenticationService', () => {
         },
       ],
     }).compile();
-
     service = module.get<AuthenticationService>(AuthenticationService);
     usersService = module.get<UsersService>(UsersService);
     jwtService = module.get<JwtService>(JwtService);
     prismaService = module.get<PrismaService>(PrismaService);
+    await prismaService.user.deleteMany({});
+    await service.signup({
+      email: 'admin@example.com',
+      password: 'adminPassword',
+      role: 'ADMIN',
+    });
+    await service.signup({
+      email: 'existing@example.com',
+      password: 'password',
+      role: Role.USER,
+    });
   });
 
   it('should be defined', () => {
@@ -40,7 +51,6 @@ describe('AuthenticationService', () => {
 
   describe('validateUser', () => {
     it('should return user without password if validation is successful', async () => {
-      // admin user in db we test with that user
       const result = await service.validateUser(
         'admin@example.com',
         'adminPassword',
@@ -88,11 +98,6 @@ describe('AuthenticationService', () => {
 
   describe('signup', () => {
     it('should throw ConflictException if user already exists', async () => {
-      const existingUser = {
-        email: 'existing@example.com',
-        password: 'password',
-        role: Role.USER,
-      };
       const signUpDto = {
         email: 'existing@example.com',
         password: 'newPassword',
