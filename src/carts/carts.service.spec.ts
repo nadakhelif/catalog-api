@@ -175,7 +175,6 @@ describe('CartsService Integration Tests', () => {
 
   describe('removeCartItem', () => {
     it('should remove item and return quantity to product stock', async () => {
-      // First add item to cart
       const addToCartDto: AddToCartDto = {
         productId: testData.products.product2.id,
         quantity: 3,
@@ -232,8 +231,8 @@ describe('CartsService Integration Tests', () => {
         where: { id: testData.products.product2.id },
       });
 
-      expect(product1.stockQuantity).toBe(10); // Stock restored to initial value
-      expect(product2.stockQuantity).toBe(10); // Stock restored to initial value
+      expect(product1.stockQuantity).toBe(10);
+      expect(product2.stockQuantity).toBe(10);
 
       // Verify cart is empty
       const cart = await cartsService.getCart(testData.users.user2.id);
