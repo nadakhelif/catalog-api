@@ -1,73 +1,176 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# Catalog API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A robust e-commerce catalog API built with Node.js, featuring user management, product catalog, shopping cart functionality, and role-based access control.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 📋 Table of Contents
+- [Features](#features)
+- [Architecture](#architecture)
+- [Prerequisites](#prerequisites)
+- [Environment Setup](#environment-setup)
+- [Installation & Running](#installation--running)
+- [Testing](#testing)
+- [API Documentation](#api-documentation)
+- [Database Schema](#database-schema)
 
-## Description
+## ✨ Features
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+### Admin Functionalities
+- Complete product catalog management (CRUD operations)
+- User cart monitoring
+- User management
+- Product inventory management
 
-## Installation
+### Customer Functionalities
+- Product browsing with authentication-based visibility
+- Shopping cart management
+- Product quantity tracking
+- Secure checkout process
 
+### Core Features
+- JWT-based authentication
+- Role-based access control (RBAC)
+- Input validation using DTOs
+- Comprehensive error handling
+- Product inventory management
+- Quantity tracking and validation
+
+## 🏗 Architecture
+
+### Core Entities
+
+#### User
+- Manages user data and authentication
+- One-to-one relationship with Cart
+- Role-based access (Admin/Customer)
+
+#### Product
+- Represents catalog items
+- Includes inventory tracking
+- Managed by admin users
+
+#### Cart
+- One-to-one relationship with User
+- One-to-many relationship with CartItems
+- Handles shopping session data
+
+#### CartItem
+- Many-to-one relationship with Product
+- Tracks quantity per product
+- Links products to carts
+
+### Modules
+
+#### UsersModule
+- `UsersController`: HTTP request handling
+- `UsersService`: User operations logic
+- `User` entity: Data representation
+
+#### ProductsModule
+- `ProductsController`: Product-related endpoints
+- `ProductsService`: Product management logic
+- `Product` entity: Product data structure
+
+#### CartsModule
+- `CartsController`: Cart operation endpoints
+- `CartsService`: Shopping cart logic
+- `Cart` & `CartItem` entities
+
+#### AuthModule
+- `AuthController`: Authentication endpoints
+- `AuthService`: Authentication logic
+- `JwtStrategy`: JWT implementation
+
+#### Guard
+- `JwtAuthGuard`:  JWT implementation
+- `OptionalJwtAuthGuard`: It's to manage the option of having a logged in user or not
+- `RolesGuard`: Role
+
+
+## 🛠 Prerequisites
+- Node.js 
+- npm or yarn
+- Docker and Docker Compose (for local development)
+- A deployed Azure postgress db 
+
+## 🌍 Environment Setup
+
+### Development Environment
 ```bash
-$ npm install
+# Clone the repository
+git clone <https://github.com/nadakhelif/catalog-api.git>
+cd catalog-api
+
+# Copy environment file
+cp .env.example .env
+
+
 ```
 
-## Running the app
-
+### Test Environment
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+# Configure test environment
+cp .env.example .env.test
 ```
 
-## Test
 
+## 🚀 Installation & Running
+
+### Local Development
 ```bash
-# unit tests
-$ npm run test
+# Install dependencies
+npm install
 
-# e2e tests
-$ npm run test:e2e
+# Start the database (Development)
+# Connect to tha deployed DB
 
-# test coverage
-$ npm run test:cov
+# Run migrations
+npm run migration:run
+
+# Start the application
+npm run start
+
+# The API will be available at http://localhost:3000
+# Swagger documentation at http://localhost:3000/api/docs
 ```
 
-## Support
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## 🧪 Testing
 
-## Stay in touch
+### Running Tests
+```bash
+# Start test database
+docker-compose -f docker-compose.test.yml up -d
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+# Run all available tests
+npm run test
 
-## License
+```
 
-Nest is [MIT licensed](LICENSE).
+## 📚 API Documentation
+
+### Swagger Documentation
+After starting the application, visit: You can find all the end points and you can test them
+```
+http://localhost:3000/api/docs
+```
+
+
+
+## 📊 Database Schema
+
+### Production Database
+- Hosted on Azure PostgreSQL
+- Configured for high availability
+- Automated backups
+
+### Test Database
+- Local PostgreSQL instance via Docker
+- Isolated testing environment
+- Matches production schema
+
+## 🔒 Security
+- JWT-based authentication
+- Role-based access control
+- Input validation
+- Secure password hashing
+
