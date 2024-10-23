@@ -19,6 +19,7 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "test:db:start": "docker-compose up -d postgres_test",
     "test:db:stop": "docker-compose down",
+    "test:reset:db": "cross-env NODE_ENV=test dotenv -e .env.test prisma migrate reset",
     "test:db:migrate": "cross-env NODE_ENV=test dotenv -e .env.test prisma migrate deploy",
     "test": "npm run test:db:start && npm run test:db:migrate && jest --runInBand && npm run test:db:stop"
   },

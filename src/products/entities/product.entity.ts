@@ -20,4 +20,5 @@ export class Product {
   updatedAt: Date;
 
   cartItems?: CartItem[];
+  stockQuantity?: number;
 }

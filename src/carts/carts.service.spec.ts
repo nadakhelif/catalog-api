@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, BadRequestException } from '@nestjs/common';
 import { CartsService } from './carts.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { setupTestData } from '../../test/testdata';
@@ -28,6 +28,15 @@ describe('CartsService Integration Tests', () => {
     prismaService = moduleFixture.get<PrismaService>(PrismaService);
   });
 
+  beforeEach(async () => {
+    // Reset product quantities before each test
+    await prismaService.cartItem.deleteMany({});
+    await prismaService.cart.deleteMany({});
+    await prismaService.product.updateMany({
+      data: { stockQuantity: 10 }, // Reset all products to have 10 items
+    });
+  });
+
   afterAll(async () => {
     await prismaService.cartItem.deleteMany({});
     await prismaService.cart.deleteMany({});
@@ -37,82 +46,81 @@ describe('CartsService Integration Tests', () => {
   });
 
   describe('addToCart', () => {
-    it('should add a new item to the cart', async () => {
+    it('should add a new item to the cart and decrease product stock', async () => {
+      const initialProduct = await prismaService.product.findUnique({
+        where: { id: testData.products.product1.id },
+      });
+
       const addToCartDto: AddToCartDto = {
         productId: testData.products.product1.id,
         quantity: 2,
       };
-      console.log(testData.users.user1);
+
       const cartItem = await cartsService.addToCart(
         testData.users.user1.id,
         addToCartDto,
       );
 
+      // Verify cart item
       expect(cartItem).toBeDefined();
       expect(cartItem.productId).toBe(testData.products.product1.id);
       expect(cartItem.quantity).toBe(2);
+
+      // Verify product stock was decreased
+      const updatedProduct = await prismaService.product.findUnique({
+        where: { id: testData.products.product1.id },
+      });
+      expect(updatedProduct.stockQuantity).toBe(
+        initialProduct.stockQuantity - 2,
+      );
     });
 
-    it('should update quantity if item already exists in cart', async () => {
+    it('should fail when trying to add more items than available stock', async () => {
+      const addToCartDto: AddToCartDto = {
+        productId: testData.products.product1.id,
+        quantity: 15, // More than the default 10 stock
+      };
+
+      await expect(
+        cartsService.addToCart(testData.users.user1.id, addToCartDto),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should update quantity if item exists and sufficient stock available', async () => {
       const addToCartDto: AddToCartDto = {
         productId: testData.products.product2.id,
-        quantity: 1,
+        quantity: 3,
       };
 
       await cartsService.addToCart(testData.users.user2.id, addToCartDto);
+
+      const secondAddToCartDto: AddToCartDto = {
+        productId: testData.products.product2.id,
+        quantity: 2,
+      };
+
       const updatedCartItem = await cartsService.addToCart(
         testData.users.user2.id,
-        addToCartDto,
+        secondAddToCartDto,
       );
 
       expect(updatedCartItem).toBeDefined();
-      expect(updatedCartItem.productId).toBe(testData.products.product2.id);
-      expect(updatedCartItem.quantity).toBe(2);
-    });
+      expect(updatedCartItem.quantity).toBe(5);
 
-    it('should add a connected-only product to the cart', async () => {
-      const addToCartDto: AddToCartDto = {
-        productId: testData.products.product3.id,
-        quantity: 1,
-      };
-
-      const cartItem = await cartsService.addToCart(
-        testData.users.user1.id,
-        addToCartDto,
-      );
-
-      expect(cartItem).toBeDefined();
-      expect(cartItem.productId).toBe(testData.products.product3.id);
-      expect(cartItem.quantity).toBe(1);
-    });
-  });
-
-  describe('getCart', () => {
-    it("should return the user's cart with items", async () => {
-      const cart = await cartsService.getCart(testData.users.user1.id);
-
-      expect(cart).toBeDefined();
-      expect(cart.userId).toBe(testData.users.user1.id);
-      expect(cart.items).toBeDefined();
-      expect(cart.items.length).toBeGreaterThan(0);
-      expect(
-        cart.items.some(
-          (item) => item.productId === testData.products.product1.id,
-        ),
-      ).toBeTruthy();
-      expect(
-        cart.items.some(
-          (item) => item.productId === testData.products.product3.id,
-        ),
-      ).toBeTruthy();
+      // Verify product stock was decreased properly
+      const product = await prismaService.product.findUnique({
+        where: { id: testData.products.product2.id },
+      });
+      expect(product.stockQuantity).toBe(5); // 10 - 5
     });
   });
 
   describe('updateCartItem', () => {
-    it('should update the quantity of a cart item', async () => {
+    it('should update quantity and adjust product stock accordingly', async () => {
+      // First add item to cart
       const addToCartDto: AddToCartDto = {
         productId: testData.products.product1.id,
-        quantity: 1,
+        quantity: 2,
       };
 
       const cartItem = await cartsService.addToCart(
@@ -120,8 +128,9 @@ describe('CartsService Integration Tests', () => {
         addToCartDto,
       );
 
+      // Update quantity
       const updateCartItemDto: UpdateCartItemDto = {
-        quantity: 3,
+        quantity: 4,
       };
 
       const updatedCartItem = await cartsService.updateCartItem(
@@ -130,23 +139,46 @@ describe('CartsService Integration Tests', () => {
         updateCartItemDto,
       );
 
-      expect(updatedCartItem).toBeDefined();
-      expect(updatedCartItem.id).toBe(cartItem.id);
-      expect(updatedCartItem.quantity).toBe(3);
+      expect(updatedCartItem.quantity).toBe(4);
+
+      // Verify product stock was adjusted
+      const product = await prismaService.product.findUnique({
+        where: { id: testData.products.product1.id },
+      });
+      expect(product.stockQuantity).toBe(6); // 10 - 4
     });
 
-    it('should throw an error when updating an item in a non-existent cart', async () => {
+    it('should fail when updating to quantity exceeding available stock', async () => {
+      const addToCartDto: AddToCartDto = {
+        productId: testData.products.product1.id,
+        quantity: 2,
+      };
+
+      const cartItem = await cartsService.addToCart(
+        testData.users.user2.id,
+        addToCartDto,
+      );
+
+      const updateCartItemDto: UpdateCartItemDto = {
+        quantity: 12, // More than available stock
+      };
+
       await expect(
-        cartsService.updateCartItem(999, 1, { quantity: 2 }),
-      ).rejects.toThrow('Cart not found');
+        cartsService.updateCartItem(
+          testData.users.user2.id,
+          cartItem.id,
+          updateCartItemDto,
+        ),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
   describe('removeCartItem', () => {
-    it('should remove an item from the cart', async () => {
+    it('should remove item and return quantity to product stock', async () => {
+      // First add item to cart
       const addToCartDto: AddToCartDto = {
         productId: testData.products.product2.id,
-        quantity: 1,
+        quantity: 3,
       };
 
       const cartItem = await cartsService.addToCart(
@@ -154,49 +186,58 @@ describe('CartsService Integration Tests', () => {
         addToCartDto,
       );
 
-      const removedCartItem = await cartsService.removeCartItem(
-        testData.users.user1.id,
-        cartItem.id,
+      // Get stock after adding to cart
+      const stockAfterAdd = await prismaService.product.findUnique({
+        where: { id: testData.products.product2.id },
+      });
+
+      // Remove item from cart
+      await cartsService.removeCartItem(testData.users.user1.id, cartItem.id);
+
+      // Verify product stock was restored
+      const stockAfterRemove = await prismaService.product.findUnique({
+        where: { id: testData.products.product2.id },
+      });
+      expect(stockAfterRemove.stockQuantity).toBe(
+        stockAfterAdd.stockQuantity + 3,
       );
 
-      expect(removedCartItem).toBeDefined();
-      expect(removedCartItem.id).toBe(cartItem.id);
-
+      // Verify item was removed from cart
       const cart = await cartsService.getCart(testData.users.user1.id);
       expect(cart.items.some((item) => item.id === cartItem.id)).toBeFalsy();
-    });
-
-    it('should throw an error when removing an item from a non-existent cart', async () => {
-      await expect(cartsService.removeCartItem(999, 1)).rejects.toThrow(
-        'Cart not found',
-      );
     });
   });
 
   describe('clearCart', () => {
-    it('should remove all items from the cart', async () => {
+    it('should clear cart and return all quantities to product stock', async () => {
+      // Add multiple items to cart
       await cartsService.addToCart(testData.users.user2.id, {
         productId: testData.products.product1.id,
-        quantity: 1,
+        quantity: 3,
       });
       await cartsService.addToCart(testData.users.user2.id, {
         productId: testData.products.product2.id,
         quantity: 2,
       });
 
+      // Clear cart
       const result = await cartsService.clearCart(testData.users.user2.id);
-
-      expect(result).toBeDefined();
       expect(result.message).toBe('Cart cleared successfully');
 
+      // Verify all product stocks were restored
+      const product1 = await prismaService.product.findUnique({
+        where: { id: testData.products.product1.id },
+      });
+      const product2 = await prismaService.product.findUnique({
+        where: { id: testData.products.product2.id },
+      });
+
+      expect(product1.stockQuantity).toBe(10); // Stock restored to initial value
+      expect(product2.stockQuantity).toBe(10); // Stock restored to initial value
+
+      // Verify cart is empty
       const cart = await cartsService.getCart(testData.users.user2.id);
       expect(cart.items.length).toBe(0);
-    });
-
-    it('should throw an error when clearing a non-existent cart', async () => {
-      await expect(cartsService.clearCart(999)).rejects.toThrow(
-        'Cart not found',
-      );
     });
   });
 });

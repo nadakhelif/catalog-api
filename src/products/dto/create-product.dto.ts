@@ -30,4 +30,10 @@ export class CreateProductDto {
   })
   @IsBoolean()
   isConnectedOnly: boolean;
+  @ApiProperty({
+    example: 2,
+    description: 'The stock Quantity of this product',
+  })
+  @IsNumber()
+  stockQuantity?: number;
 }

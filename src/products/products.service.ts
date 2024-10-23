@@ -3,6 +3,7 @@ import {
   NotFoundException,
   InternalServerErrorException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -75,5 +76,26 @@ export class ProductsService {
       }
       throw new InternalServerErrorException('Failed to delete the product');
     }
+  }
+
+  async updateStock(id: number, quantityChange: number) {
+    return await this.prisma.$transaction(async (tx) => {
+      const product = await tx.product.findUnique({ where: { id } });
+
+      if (!product) {
+        throw new NotFoundException(`Product with ID ${id} not found`);
+      }
+
+      const newQuantity = product.stockQuantity + quantityChange;
+
+      if (newQuantity < 0) {
+        throw new BadRequestException('Insufficient stock');
+      }
+
+      return await tx.product.update({
+        where: { id },
+        data: { stockQuantity: newQuantity },
+      });
+    });
   }
 }
