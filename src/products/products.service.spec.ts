@@ -107,7 +107,10 @@ describe('ProductsService Integration Tests', () => {
       };
 
       const createdProduct = await productsService.create(createProductDto);
-      const foundProduct = await productsService.findOne(createdProduct.id);
+      const foundProduct = await productsService.findOne(
+        createdProduct.id,
+        true,
+      );
 
       expect(foundProduct).toBeDefined();
       expect(foundProduct.id).toBe(createdProduct.id);
@@ -115,7 +118,7 @@ describe('ProductsService Integration Tests', () => {
     });
 
     it('should throw NotFoundException for non-existent product', async () => {
-      await expect(productsService.findOne(999999)).rejects.toThrow(
+      await expect(productsService.findOne(999999, true)).rejects.toThrow(
         'Product with ID 999999 not found',
       );
     });
@@ -175,9 +178,9 @@ describe('ProductsService Integration Tests', () => {
       expect(removedProduct).toBeDefined();
       expect(removedProduct.id).toBe(createdProduct.id);
 
-      await expect(productsService.findOne(createdProduct.id)).rejects.toThrow(
-        `Product with ID ${createdProduct.id} not found`,
-      );
+      await expect(
+        productsService.findOne(createdProduct.id, true),
+      ).rejects.toThrow(`Product with ID ${createdProduct.id} not found`);
     });
 
     it('should throw NotFoundException when removing non-existent product', async () => {
