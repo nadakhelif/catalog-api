@@ -97,7 +97,7 @@ A robust e-commerce catalog API built with Node.js, featuring user management, p
 ### Development Environment
 ```bash
 # Clone the repository
-git clone <https://github.com/nadakhelif/catalog-api.git>
+git clone https://github.com/nadakhelif/catalog-api.git
 cd catalog-api
 
 # Copy environment file
