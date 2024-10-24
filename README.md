@@ -14,6 +14,19 @@ A robust e-commerce catalog API built with Node.js, featuring user management, p
 
 ## ✨ Features
 
+### Current Implementation Status
+✅ Completed Features:
+- Basic CRUD operations for products
+- User authentication and authorization
+- Shopping cart functionality
+- Product visibility control based on user status
+- Database integration with PostgreSQL
+- Swagger API documentation
+- Docker setup for testing
+- Production deployment configuration with Azure
+
+
+
 ### Admin Functionalities
 - Complete product catalog management (CRUD operations)
 - User cart monitoring
@@ -33,6 +46,21 @@ A robust e-commerce catalog API built with Node.js, featuring user management, p
 - Comprehensive error handling
 - Product inventory management
 - Quantity tracking and validation
+
+### Improvements and Future Work
+
+#### Payment Integration
+- Implement Stripe payment gateway integration
+  - Add payment service module
+  - Create secure payment processing flow
+  - Implement webhook handlers for payment status updates
+  - Add payment status tracking to orders
+  - Implement refund functionality
+
+#### Monitoring and Logging
+- Implement comprehensive monitoring system
+  - Add Prometheus metrics collection
+  - Set up Grafana dashboards for visualization
 
 ## 🏗 Architecture
 
@@ -102,7 +130,6 @@ cd catalog-api
 
 # Copy environment file
 cp .env.example .env
-
 
 ```
 
