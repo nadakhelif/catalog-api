@@ -45,8 +45,6 @@ export class ProductsController {
   @ApiResponse({ status: 200, description: 'Returns all products' })
   findAll(@Request() req) {
     const isConnected = req.user !== false;
-    console.log(isConnected);
-    console.log(req.user);
     return this.productsService.findAll(isConnected);
   }
 
